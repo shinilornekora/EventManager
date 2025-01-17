@@ -1,5 +1,6 @@
 package com.gateway.controllers;
 
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -15,10 +16,13 @@ import com.gateway.payloads.DataPayload;
 import com.gateway.services.CrudService;
 import com.gateway.services.ElasticsearchService;
 import com.gateway.services.RedisService;
+import org.example.event.grpc.Event;
 
 @RestController
 @RequestMapping("/api")
 public class GatewayController {
+
+    private static final String QUEUE_NAME = "crudQueue";
 
     @Autowired
     private RedisService redisService;
@@ -29,10 +33,13 @@ public class GatewayController {
     @Autowired
     private CrudService crudService;
 
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
+
     @GetMapping("/data")
     public ResponseEntity<String> getData(@RequestParam String key) {
         String cachedData = redisService.getFromCache(key);
-        
+
         if (cachedData != null) {
             return ResponseEntity.ok(cachedData);
         }
@@ -44,26 +51,55 @@ public class GatewayController {
         return ResponseEntity.ok(data);
     }
 
-    // TODO: шлем в rabbitmq
     @PostMapping("/data")
     public ResponseEntity<Void> postData(@RequestBody DataPayload payload) {
         crudService.saveData(payload);
         elasticsearchService.logRequest(payload.toString());
+
+        // Create and send event to RabbitMQ
+        Event event = Event.newBuilder()
+                .setEventId("post-" + System.currentTimeMillis())
+                .setQueryType("POST")
+                .setEventLocation("GatewayController")
+                .setEventDate(String.valueOf(System.currentTimeMillis()))
+                .setEventName("Create Data")
+                .build();
+
+        rabbitTemplate.convertAndSend(QUEUE_NAME, event.toByteArray());
         return ResponseEntity.ok().build();
     }
 
-    // TODO: шлем в rabbitmq
-    @PutMapping("data")
+    @PutMapping("/data")
     public ResponseEntity<Void> putData(@RequestBody DataPayload payload) {
+        crudService.updateData(payload);
         elasticsearchService.logRequest(payload.toString());
+
+        Event event = Event.newBuilder()
+                .setEventId("put-" + System.currentTimeMillis())
+                .setQueryType("PUT")
+                .setEventLocation("GatewayController")
+                .setEventDate(String.valueOf(System.currentTimeMillis()))
+                .setEventName("Update Data")
+                .build();
+
+        rabbitTemplate.convertAndSend(QUEUE_NAME, event.toByteArray());
         return ResponseEntity.ok().build();
     }
 
-    // TODO: шлем в rabbitmq
-    @DeleteMapping("data")
+    @DeleteMapping("/data")
     public ResponseEntity<Void> deleteData(@RequestBody DataPayload payload) {
+        crudService.deleteData(payload);
         elasticsearchService.logRequest(payload.toString());
+
+        Event event = Event.newBuilder()
+                .setEventId("delete-" + System.currentTimeMillis())
+                .setQueryType("DELETE")
+                .setEventLocation("GatewayController")
+                .setEventDate(String.valueOf(System.currentTimeMillis()))
+                .setEventName("Delete Data")
+                .build();
+
+        rabbitTemplate.convertAndSend(QUEUE_NAME, event.toByteArray());
         return ResponseEntity.ok().build();
     }
-
 }

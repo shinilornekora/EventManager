@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitMQConfig {
 
-    private static final String QUEUE_NAME = "post_operations_queue";
+    private static final String QUEUE_NAME = "crudQueue";
 
     @Bean
     public Queue postQueue() {

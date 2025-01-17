@@ -1,11 +1,16 @@
 package com.gateway.services;
 
 import org.springframework.stereotype.Service;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
 import com.gateway.payloads.DataPayload;
 
 @Service
 public class CrudService {
+
+    private RabbitTemplate rabbitTemplate;
+    private static final String QUEUE_NAME = "crudQueue";
+
 
     public String getData(String key) {
         System.out.println("Fetching data from CRUD service for key: " + key);
@@ -27,7 +32,7 @@ public class CrudService {
         }
     }
 
-    public void putData(DataPayload payload) {
+    public void updateData(DataPayload payload) {
         System.out.println("Putting data to the CRUD service: " + payload);
     }
 

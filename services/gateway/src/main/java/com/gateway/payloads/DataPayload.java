@@ -24,8 +24,8 @@ public class DataPayload {
     @Override
     public String toString() {
         return "DataPayload{" +
-                "key='" + key + '\'' +
-                ", value='" + value + '\'' +
+                "key='" + key + "'" +
+                ", value='" + value + "'" +
                 '}';
     }
 }
