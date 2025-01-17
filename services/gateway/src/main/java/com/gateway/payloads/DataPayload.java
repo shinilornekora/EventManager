@@ -12,7 +12,6 @@ public class DataPayload {
                 "location='" + location + "'" +
                 ", name='" + name + "'" +
                 ", id='" + id + "'" +
-                ", id='" + id + "'" +
                 '}';
     }
 }

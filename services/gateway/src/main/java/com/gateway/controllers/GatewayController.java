@@ -55,13 +55,12 @@ public class GatewayController {
 
     @PostMapping("/data")
     public ResponseEntity<Void> postData(@RequestBody DataPayload payload) {
-        final String TS = String.valueOf(System.currentTimeMillis());
         final String uuid = UUID.randomUUID().toString();
         
         Event event = Event.newBuilder()
                 .setQueryType("ADD")
                 .setEventId(uuid)
-                .setEventDate(TS)
+                .setEventDate(payload.date)
                 .setEventLocation(payload.location)
                 .setEventName(payload.name)
                 .build();
