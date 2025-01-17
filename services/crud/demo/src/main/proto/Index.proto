@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package event;
+
+option java_multiple_files = true;
+option java_package = "org.example.event.grpc";
+option java_outer_classname = "EventProto";
+
+message Event {
+    string eventId = 1;
+    string queryType = 2;
+    string eventLocation = 3;
+    string event_date = 4;
+    string event_name = 5;
+}

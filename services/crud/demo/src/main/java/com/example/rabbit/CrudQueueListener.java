@@ -1,9 +1,9 @@
-package com.example.demo.rabbit;
+package com.example.rabbit;
 
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
-import com.example.demo.config.RabbitMQConfig;
+import com.example.config.RabbitMQConfig;
 
 @Component
 public class CrudQueueListener {
@@ -16,6 +16,7 @@ public class CrudQueueListener {
 
     @RabbitListener(queues = RabbitMQConfig.CRUD_QUEUE)
     public void handleMessage(String message) {
-        messageProcessor.processMessage(message);
+         messageProcessor.processMessage(message.getBytes());
+        
     }
 }
