@@ -22,7 +22,7 @@ public class EventEntity {
     private String eventName;
 
     @Column(name = "event_date", nullable = false)
-    private LocalDateTime eventDate;
+    private String eventDate;
 
     @Column(name = "event_location", nullable = false)
     private String eventLocation;
@@ -49,11 +49,11 @@ public class EventEntity {
         this.eventName = eventName;
     }
 
-    public LocalDateTime getEventDate() {
+    public String getEventDate() {
         return eventDate;
     }
 
-    public void setEventDate(LocalDateTime eventDate) {
+    public void setEventDate(String eventDate) {
         this.eventDate = eventDate;
     }
 

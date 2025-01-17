@@ -79,7 +79,7 @@ public class MessageProcessor {
         }
 
         event.setEventName(grpcEvent.getEventName());
-        event.setEventDate(LocalDateTime.parse(grpcEvent.getEventDate(), DateTimeFormatter.ISO_DATE_TIME));
+        event.setEventDate(grpcEvent.getEventDate());
         event.setEventLocation(grpcEvent.getEventLocation());
 
         return event;
