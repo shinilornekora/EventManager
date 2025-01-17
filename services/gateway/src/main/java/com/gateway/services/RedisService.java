@@ -29,6 +29,6 @@ public class RedisService {
      * @param value Значение.
      */
     public void saveToCache(String key, String value) {
-        redisTemplate.opsForValue().set(key, value, 10, TimeUnit.MINUTES); // Данные будут храниться 10 минут
+        redisTemplate.opsForValue().set(key, value, 10, TimeUnit.MINUTES);
     }
 }

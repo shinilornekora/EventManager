@@ -18,6 +18,8 @@ import com.gateway.services.ElasticsearchService;
 import com.gateway.services.RedisService;
 import org.example.event.grpc.Event;
 
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/api")
 public class GatewayController {
@@ -53,53 +55,52 @@ public class GatewayController {
 
     @PostMapping("/data")
     public ResponseEntity<Void> postData(@RequestBody DataPayload payload) {
-        crudService.saveData(payload);
-        elasticsearchService.logRequest(payload.toString());
-
-        // Create and send event to RabbitMQ
+        final String TS = String.valueOf(System.currentTimeMillis());
+        final String uuid = UUID.randomUUID().toString();
+        
         Event event = Event.newBuilder()
-                .setEventId("post-" + System.currentTimeMillis())
-                .setQueryType("POST")
-                .setEventLocation("GatewayController")
-                .setEventDate(String.valueOf(System.currentTimeMillis()))
-                .setEventName("Create Data")
+                .setQueryType("ADD")
+                .setEventId(uuid)
+                .setEventDate(TS)
+                .setEventLocation(payload.location)
+                .setEventName(payload.name)
                 .build();
-
+        
+        crudService.throwMessageToQueue(event);
+        elasticsearchService.logRequest(payload.toString());
         rabbitTemplate.convertAndSend(QUEUE_NAME, event.toByteArray());
+
         return ResponseEntity.ok().build();
     }
 
     @PutMapping("/data")
     public ResponseEntity<Void> putData(@RequestBody DataPayload payload) {
-        crudService.updateData(payload);
-        elasticsearchService.logRequest(payload.toString());
-
         Event event = Event.newBuilder()
-                .setEventId("put-" + System.currentTimeMillis())
-                .setQueryType("PUT")
-                .setEventLocation("GatewayController")
-                .setEventDate(String.valueOf(System.currentTimeMillis()))
-                .setEventName("Update Data")
+                .setQueryType("CHANGE")
+                .setEventId(payload.id)
+                .setEventDate(payload.date)
+                .setEventLocation(payload.location)
+                .setEventName(payload.name)
                 .build();
 
+        crudService.throwMessageToQueue(event);
+        elasticsearchService.logRequest(payload.toString());
         rabbitTemplate.convertAndSend(QUEUE_NAME, event.toByteArray());
+
         return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/data")
     public ResponseEntity<Void> deleteData(@RequestBody DataPayload payload) {
-        crudService.deleteData(payload);
-        elasticsearchService.logRequest(payload.toString());
-
         Event event = Event.newBuilder()
-                .setEventId("delete-" + System.currentTimeMillis())
-                .setQueryType("DELETE")
-                .setEventLocation("GatewayController")
-                .setEventDate(String.valueOf(System.currentTimeMillis()))
-                .setEventName("Delete Data")
+                .setQueryType("CHANGE")
+                .setEventId(payload.id)
                 .build();
 
+        crudService.throwMessageToQueue(event);
+        elasticsearchService.logRequest(payload.toString());
         rabbitTemplate.convertAndSend(QUEUE_NAME, event.toByteArray());
+
         return ResponseEntity.ok().build();
     }
 }

@@ -1,5 +1,6 @@
 package com.gateway.services;
 
+import org.example.event.grpc.Event;
 import org.springframework.stereotype.Service;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
@@ -17,26 +18,15 @@ public class CrudService {
         return "Sample data for key: " + key;
     }
 
-    public void saveData(DataPayload payload) {
+    public void throwMessageToQueue(Event payload) {
         try {
-            // Convert payload to gRPC binary format
             byte[] grpcBinaryData = payload.toByteArray();
 
-            // Publish to RabbitMQ
-            rabbitTemplate.convertAndSend("post_operations_queue", grpcBinaryData);
-
+            rabbitTemplate.convertAndSend(QUEUE_NAME, grpcBinaryData);
             System.out.println("Posted data to RabbitMQ: " + payload);
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException("Failed to save data");
         }
-    }
-
-    public void updateData(DataPayload payload) {
-        System.out.println("Putting data to the CRUD service: " + payload);
-    }
-
-    public void deleteData(DataPayload payload) {
-        System.out.println("Deleting data from the CRUD service: " + payload);
     }
 }

@@ -28,7 +28,7 @@ public class RabbitMQConfig {
     @Bean
     public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
         RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
-        rabbitTemplate.setExchange(""); // Use the default exchange
+        rabbitTemplate.setExchange("");
         return rabbitTemplate;
     }
 }
