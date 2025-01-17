@@ -29,9 +29,9 @@ public class MessageProcessor {
             Event payload = Event.parseFrom(message);
 
             switch (payload.getQueryType().toUpperCase()) {
-                case "POST" ->
+                case "ADD" ->
                     handleCreate(payload);
-                case "PUT" -> 
+                case "CHANGE" ->
                     handleUpdate(payload);
                 case "DELETE" ->
                     handleDelete(payload);
@@ -50,8 +50,9 @@ public class MessageProcessor {
 
     private void handleUpdate(Event payload) {
         EventEntity event = convertToEntity(payload);
+        String eventId = event.getEventId();
 
-        if (eventRepository.existsById(event.getEventId())) {
+        if (eventRepository.existsById(Long.valueOf(eventId))) {
             eventRepository.save(event);
             logger.info("EventEntity updated: {}", event);
         } else {
@@ -74,7 +75,7 @@ public class MessageProcessor {
         EventEntity event = new EventEntity();
 
         if (!grpcEvent.getEventId().isEmpty()) {
-            event.setEventId(Long.parseLong(grpcEvent.getEventId()));
+            event.setEventId(grpcEvent.getEventId());
         }
 
         event.setEventName(grpcEvent.getEventName());

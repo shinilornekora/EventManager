@@ -16,7 +16,7 @@ public class EventEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "event_id")
-    private Long eventId;
+    private String eventId;
 
     @Column(name = "event_name", nullable = false)
     private String eventName;
@@ -33,11 +33,11 @@ public class EventEntity {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    public Long getEventId() {
+    public String getEventId() {
         return eventId;
     }
 
-    public void setEventId(Long eventId) {
+    public void setEventId(String eventId) {
         this.eventId = eventId;
     }
 

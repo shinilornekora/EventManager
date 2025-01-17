@@ -17,6 +17,5 @@ public class CrudQueueListener {
     @RabbitListener(queues = RabbitMQConfig.CRUD_QUEUE)
     public void handleMessage(String message) {
          messageProcessor.processMessage(message.getBytes());
-        
     }
 }
