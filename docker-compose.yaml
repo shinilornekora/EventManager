@@ -2,7 +2,7 @@ services:
   gateway_service:
     build:
       context: ./services/gateway
-    container_name: gateway_service
+    container_name: gateway-service
     ports:
       - "8080:8080"
     depends_on:

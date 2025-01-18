@@ -2,6 +2,7 @@ package com.gateway.controllers;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.micrometer.core.annotation.Timed;
 import org.example.event.grpc.*;
 import com.google.protobuf.util.JsonFormat;
 
@@ -54,6 +55,7 @@ public class GatewayController {
 
     @GetMapping("/data")
     @Cacheable("events")
+    @Timed(value = "gateway.get_certain_data", description = "Time taken to fetch certain event")
     public String getData(@RequestParam String key) {
         GetDataRequest request = GetDataRequest.newBuilder()
                 .setEventId(key)
@@ -72,6 +74,7 @@ public class GatewayController {
 
     @GetMapping("/data/all")
     @Cacheable("events")
+    @Timed(value = "gateway.get_all_data", description = "All events are came throughout this time")
     public String getAllData() {
         try {
             GetDataResponseAll response = crudServiceBlockingStub.getAllData(Empty.newBuilder().build());
@@ -87,6 +90,7 @@ public class GatewayController {
 
     @PostMapping("/data")
     @CacheEvict(cacheNames = "events", allEntries = true)
+    @Timed(value = "gateway.post_data", description = "Certain event has came throughout this time")
     public ResponseEntity<String> postData(@RequestBody DataPayload payload) {
         final String uuid = UUID.randomUUID().toString();
         
@@ -107,6 +111,7 @@ public class GatewayController {
 
     @PutMapping("/data")
     @CacheEvict(cacheNames = "events", allEntries = true)
+    @Timed(value = "gateway.post_data", description = "Certain event has put throughout this time")
     public ResponseEntity<String> putData(@RequestBody DataPayload payload) {
         Event event = Event.newBuilder()
                 .setQueryType("CHANGE")
@@ -125,6 +130,7 @@ public class GatewayController {
 
     @DeleteMapping("/data")
     @CacheEvict(cacheNames = "events", allEntries = true)
+    @Timed(value = "gateway.post_data", description = "Certain event has been deleted throughout this time")
     public ResponseEntity<String> deleteData(@RequestBody DataPayload payload) {
         Event event = Event.newBuilder()
                 .setQueryType("DELETE")
