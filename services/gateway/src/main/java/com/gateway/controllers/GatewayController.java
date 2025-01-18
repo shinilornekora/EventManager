@@ -7,6 +7,9 @@ import com.google.protobuf.util.JsonFormat;
 
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,18 +23,17 @@ import org.springframework.web.bind.annotation.RestController;
 import com.gateway.payloads.DataPayload;
 import com.gateway.services.CrudService;
 import com.gateway.services.ElasticsearchService;
-import com.gateway.services.RedisService;
 
 import java.util.UUID;
 
+
+
 @RestController
 @RequestMapping("/api")
+@EnableCaching
 public class GatewayController {
 
     private static final String QUEUE_NAME = "crudQueue";
-
-    @Autowired
-    private RedisService redisService;
 
     @Autowired
     private ElasticsearchService elasticsearchService;
@@ -45,7 +47,7 @@ public class GatewayController {
     private final CrudServiceGrpc.CrudServiceBlockingStub crudServiceBlockingStub;
 
     public GatewayController() {
-        ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", 50051)
+        ManagedChannel channel = ManagedChannelBuilder.forAddress("domain-service", 50051)
                 .usePlaintext()
                 .build();
 
@@ -53,54 +55,39 @@ public class GatewayController {
     }
 
     @GetMapping("/data")
-    public ResponseEntity<?> getData(@RequestParam String key) {
-        System.out.println("Howdy! I will handle your get request. Key is: " + key);
-
+    @Cacheable("events")
+    public String getData(@RequestParam String key) {
         GetDataRequest request = GetDataRequest.newBuilder()
                 .setEventId(key)
                 .build();
-
-        System.out.println("created getdararequest");
         try {
             Event response = crudServiceBlockingStub.getData(request);
-
-            System.out.println("got response from grpc");
-
-            String cachedInRedis = redisService.getFromCache(response.getEventId());
-
-            System.out.println("made dome things with redis");
-
-            if (cachedInRedis == null) {
-                redisService.saveToCache(response.getEventId(), String.valueOf(response));
-            }
-
             String jsonResponse = JsonFormat.printer().print(response);
 
-            return ResponseEntity.ok(jsonResponse);
+            elasticsearchService.logRequest("get", jsonResponse);
+
+            return jsonResponse;
         } catch (Exception e) {
-            return ResponseEntity.status(500).body("Error while fetching data: " + e.getMessage());
+            return "Error while fetching data: " + e.getMessage();
         }
     }
 
     @GetMapping("/data/all")
-    public ResponseEntity<?> getAllData() {
+    @Cacheable("events")
+    public String getAllData() {
         try {
             GetDataResponseAll response = crudServiceBlockingStub.getAllData(Empty.newBuilder().build());
-            String cachedInRedis = redisService.getFromCache("all");
-
-            if (cachedInRedis == null) {
-                redisService.saveToCache("all", String.valueOf(response));
-            }
-
             String jsonResponse = JsonFormat.printer().print(response);
+            elasticsearchService.logRequest("getAll", jsonResponse);
 
-            return ResponseEntity.ok(jsonResponse);
+            return jsonResponse;
         } catch (Exception e) {
-            return ResponseEntity.status(500).body("Error while fetching data: " + e.getMessage());
+            return "Error while fetching data: " + e.getMessage();
         }
     }
 
     @PostMapping("/data")
+    @CacheEvict(cacheNames = "events", allEntries = true)
     public ResponseEntity<Void> postData(@RequestBody DataPayload payload) {
         final String uuid = UUID.randomUUID().toString();
         
@@ -113,13 +100,14 @@ public class GatewayController {
                 .build();
         
         crudService.throwMessageToQueue(event);
-        elasticsearchService.logRequest(payload.toString());
+        elasticsearchService.logRequest("post", payload.toString());
         rabbitTemplate.convertAndSend(QUEUE_NAME, event.toByteArray());
 
         return ResponseEntity.ok().build();
     }
 
     @PutMapping("/data")
+    @CacheEvict(cacheNames = "events", allEntries = true)
     public ResponseEntity<Void> putData(@RequestBody DataPayload payload) {
         Event event = Event.newBuilder()
                 .setQueryType("CHANGE")
@@ -130,13 +118,14 @@ public class GatewayController {
                 .build();
 
         crudService.throwMessageToQueue(event);
-        elasticsearchService.logRequest(payload.toString());
+        elasticsearchService.logRequest("put", payload.toString());
         rabbitTemplate.convertAndSend(QUEUE_NAME, event.toByteArray());
 
         return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/data")
+    @CacheEvict(cacheNames = "events", allEntries = true)
     public ResponseEntity<Void> deleteData(@RequestBody DataPayload payload) {
         Event event = Event.newBuilder()
                 .setQueryType("DELETE")
@@ -144,7 +133,7 @@ public class GatewayController {
                 .build();
 
         crudService.throwMessageToQueue(event);
-        elasticsearchService.logRequest(payload.toString());
+        elasticsearchService.logRequest("delete", payload.toString());
         rabbitTemplate.convertAndSend(QUEUE_NAME, event.toByteArray());
 
         return ResponseEntity.ok().build();

@@ -9,7 +9,7 @@ services:
       - redis
       - elasticsearch
       - prometheus
-      - domain_service
+      - domain-service
 
   redis:
     image: redis:latest
@@ -84,14 +84,15 @@ services:
       - "5672:5672"
       - "15672:15672"
 
-  domain_service:
+  domain-service:
     build:
       context: ./services/crud
-    container_name: domain_service
+    container_name: domain-service
     ports:
       - "50051:50051"
     depends_on:
       - postgres
+      - rabbitmq
 
   postgres:
     image: postgres:13
