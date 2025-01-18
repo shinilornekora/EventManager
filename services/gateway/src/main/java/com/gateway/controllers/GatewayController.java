@@ -83,7 +83,7 @@ public class GatewayController {
     }
 
     @GetMapping("/data/all")
-    public ResponseEntity<?> getAllData(@RequestParam String key) {
+    public ResponseEntity<?> getAllData() {
         try {
             GetDataResponseAll response = crudServiceBlockingStub.getAllData(Empty.newBuilder().build());
             String cachedInRedis = redisService.getFromCache("all");

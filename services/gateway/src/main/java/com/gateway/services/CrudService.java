@@ -17,12 +17,6 @@ public class CrudService {
 
     private static final String QUEUE_NAME = "crudQueue";
 
-
-    public String getData(String key) {
-        System.out.println("Fetching data from CRUD service for key: " + key);
-        return "Sample data for key: " + key;
-    }
-
     public void throwMessageToQueue(Event payload) {
         try {
             byte[] grpcBinaryData = payload.toByteArray();
