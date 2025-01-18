@@ -14,8 +14,7 @@ import jakarta.persistence.Table;
 public class EventEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "event_id")
+    @Column(name = "event_id", nullable = false, length = 255)
     private String eventId;
 
     @Column(name = "event_name", nullable = false)
@@ -38,6 +37,7 @@ public class EventEntity {
     }
 
     public void setEventId(String eventId) {
+        System.out.println("Setting event-id: " + eventId);
         this.eventId = eventId;
     }
 

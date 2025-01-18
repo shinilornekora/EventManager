@@ -4,31 +4,41 @@ import com.example.entities.EventEntity;
 import org.example.event.grpc.Event;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.example.repositories.EventRepository;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class MessageProcessor {
 
     private static final Logger logger = LoggerFactory.getLogger(MessageProcessor.class);
 
+    @Autowired
     private final EventRepository eventRepository;
 
     public MessageProcessor(EventRepository eventRepository) {
         this.eventRepository = eventRepository;
     }
 
-    public void processMessage(byte[] message) {
+    public Object processMessage(byte[] message) {
         logger.info("Processing gRPC binary message");
 
         try {
             Event payload = Event.parseFrom(message);
 
             switch (payload.getQueryType().toUpperCase()) {
+                case "ALL" -> {
+                    return handleGetAll();
+                }
+                case "GET" -> {
+                    return handleGet(payload.getEventId());
+                }
                 case "ADD" ->
                     handleCreate(payload);
                 case "CHANGE" ->
@@ -40,6 +50,16 @@ public class MessageProcessor {
         } catch (Exception e) {
             logger.error("Error processing gRPC message", e);
         }
+
+        return null;
+    }
+
+    public List<EventEntity> handleGetAll() {
+        return eventRepository.findAll();
+    }
+
+    public EventEntity handleGet(String key) {
+        return eventRepository.findById(key).orElseThrow();
     }
 
     private void handleCreate(Event payload) {
@@ -52,7 +72,7 @@ public class MessageProcessor {
         EventEntity event = convertToEntity(payload);
         String eventId = event.getEventId();
 
-        if (eventRepository.existsById(Long.valueOf(eventId))) {
+        if (eventRepository.existsById(eventId)) {
             eventRepository.save(event);
             logger.info("EventEntity updated: {}", event);
         } else {
@@ -61,7 +81,7 @@ public class MessageProcessor {
     }
 
     private void handleDelete(Event payload) {
-        Long eventId = Long.parseLong(payload.getEventId());
+        String eventId = payload.getEventId();
 
         if (eventRepository.existsById(eventId)) {
             eventRepository.deleteById(eventId);

@@ -6,10 +6,29 @@ option java_multiple_files = true;
 option java_package = "org.example.event.grpc";
 option java_outer_classname = "EventProto";
 
+service CrudService {
+    rpc GetData(GetDataRequest) returns (Event);
+    rpc GetAllData(Empty) returns (GetDataResponseAll);
+}
+
+message Empty {}
+
+message GetDataRequest {
+    string event_id = 1;
+}
+
+message GetDataResponseAll {
+    repeated Event event = 1;
+}
+
+message GetDataResponse {
+    Event event = 1;
+}
+
 message Event {
-    string eventId = 1;
-    string queryType = 2;
-    string eventLocation = 3;
+    string event_id = 1;
+    string query_type = 2;
+    string event_location = 3;
     string event_date = 4;
     string event_name = 5;
 }
