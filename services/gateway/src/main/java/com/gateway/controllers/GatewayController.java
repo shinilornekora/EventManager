@@ -139,7 +139,7 @@ public class GatewayController {
     @DeleteMapping("/data")
     public ResponseEntity<Void> deleteData(@RequestBody DataPayload payload) {
         Event event = Event.newBuilder()
-                .setQueryType("CHANGE")
+                .setQueryType("DELETE")
                 .setEventId(payload.id)
                 .build();
 
