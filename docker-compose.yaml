@@ -28,8 +28,6 @@ services:
       xpack.security.enrollment.enabled: "true"
       xpack.security.enabled: "false"
       ES_JAVA_OPTS: "-Xms512m -Xmx512m"
-    networks: 
-      - lab-logging-network
 
   logstash:
     image: logstash:8.8.0
@@ -44,8 +42,6 @@ services:
     depends_on:
       - elasticsearch
       - rabbitmq
-    networks:
-      - lab-logging-network
 
 
   kibana:
@@ -57,8 +53,6 @@ services:
       - 5601:5601
     depends_on:
       - elasticsearch
-    networks:
-      - lab-logging-network
 
   prometheus:
     image: prom/prometheus:latest

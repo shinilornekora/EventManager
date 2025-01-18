@@ -5,6 +5,8 @@ import io.grpc.ManagedChannelBuilder;
 import org.example.event.grpc.*;
 import com.google.protobuf.util.JsonFormat;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
@@ -22,11 +24,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.gateway.payloads.DataPayload;
 import com.gateway.services.CrudService;
-import com.gateway.services.ElasticsearchService;
 
 import java.util.UUID;
-
-
 
 @RestController
 @RequestMapping("/api")
@@ -35,8 +34,7 @@ public class GatewayController {
 
     private static final String QUEUE_NAME = "crudQueue";
 
-    @Autowired
-    private ElasticsearchService elasticsearchService;
+    private static final Logger logRequest = LoggerFactory.getLogger(GatewayController.class);
 
     @Autowired
     private CrudService crudService;
@@ -64,7 +62,7 @@ public class GatewayController {
             Event response = crudServiceBlockingStub.getData(request);
             String jsonResponse = JsonFormat.printer().print(response);
 
-            elasticsearchService.logRequest("get", jsonResponse);
+            logRequest.info("get: " + jsonResponse);
 
             return jsonResponse;
         } catch (Exception e) {
@@ -78,7 +76,8 @@ public class GatewayController {
         try {
             GetDataResponseAll response = crudServiceBlockingStub.getAllData(Empty.newBuilder().build());
             String jsonResponse = JsonFormat.printer().print(response);
-            elasticsearchService.logRequest("getAll", jsonResponse);
+
+            logRequest.info("get_all: " + jsonResponse);
 
             return jsonResponse;
         } catch (Exception e) {
@@ -88,7 +87,7 @@ public class GatewayController {
 
     @PostMapping("/data")
     @CacheEvict(cacheNames = "events", allEntries = true)
-    public ResponseEntity<Void> postData(@RequestBody DataPayload payload) {
+    public ResponseEntity<String> postData(@RequestBody DataPayload payload) {
         final String uuid = UUID.randomUUID().toString();
         
         Event event = Event.newBuilder()
@@ -100,15 +99,15 @@ public class GatewayController {
                 .build();
         
         crudService.throwMessageToQueue(event);
-        elasticsearchService.logRequest("post", payload.toString());
+        logRequest.info("post: " + payload.toString());
         rabbitTemplate.convertAndSend(QUEUE_NAME, event.toByteArray());
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok("Your query was placed in queue. Try to make another operation to see if it was ok");
     }
 
     @PutMapping("/data")
     @CacheEvict(cacheNames = "events", allEntries = true)
-    public ResponseEntity<Void> putData(@RequestBody DataPayload payload) {
+    public ResponseEntity<String> putData(@RequestBody DataPayload payload) {
         Event event = Event.newBuilder()
                 .setQueryType("CHANGE")
                 .setEventId(payload.id)
@@ -118,24 +117,24 @@ public class GatewayController {
                 .build();
 
         crudService.throwMessageToQueue(event);
-        elasticsearchService.logRequest("put", payload.toString());
+        logRequest.info("put: " + payload.toString());
         rabbitTemplate.convertAndSend(QUEUE_NAME, event.toByteArray());
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok("Your query was placed in queue. Try to make another operation to see if it was ok");
     }
 
     @DeleteMapping("/data")
     @CacheEvict(cacheNames = "events", allEntries = true)
-    public ResponseEntity<Void> deleteData(@RequestBody DataPayload payload) {
+    public ResponseEntity<String> deleteData(@RequestBody DataPayload payload) {
         Event event = Event.newBuilder()
                 .setQueryType("DELETE")
                 .setEventId(payload.id)
                 .build();
 
         crudService.throwMessageToQueue(event);
-        elasticsearchService.logRequest("delete", payload.toString());
+        logRequest.info("delete: " + payload.toString());
         rabbitTemplate.convertAndSend(QUEUE_NAME, event.toByteArray());
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok("Your query was placed in queue. Try to make another operation to see if it was ok");
     }
 }
