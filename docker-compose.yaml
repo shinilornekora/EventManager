@@ -1,15 +1,15 @@
 services:
-  # gateway_service:
-  #   build:
-  #     context: ./services/gateway
-  #   container_name: gateway_service
-  #   ports:
-  #     - "8081:8081"
-  #   depends_on:
-  #     - redis
-  #     - elasticsearch
-  #     - prometheus
-  #     - app
+  gateway_service:
+    build:
+      context: ./services/gateway
+    container_name: gateway_service
+    ports:
+      - "8080:8080"
+    depends_on:
+      - redis
+      - elasticsearch
+      - prometheus
+      - domain_service
 
   redis:
     image: redis:latest
@@ -84,14 +84,14 @@ services:
       - "5672:5672"
       - "15672:15672"
 
-  # domain_service:
-  #   build:
-  #     context: ./services/crud
-  #   container_name: domain_service
-  #   ports:
-  #     - "50051:50051"
-  #   depends_on:
-  #     - postgres
+  domain_service:
+    build:
+      context: ./services/crud
+    container_name: domain_service
+    ports:
+      - "50051:50051"
+    depends_on:
+      - postgres
 
   postgres:
     image: postgres:13
@@ -102,8 +102,6 @@ services:
       POSTGRES_DB: mydatabase
     ports:
       - "5432:5432"
-    # volumes:
-    #   - postgres_data:/var/lib/postgresql/data
 
 volumes:
   elastic_data:
