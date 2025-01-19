@@ -49,6 +49,7 @@ public class MessageProcessor {
             }
         } catch (Exception e) {
             logger.error("Error processing gRPC message", e);
+            return null;
         }
 
         return null;
